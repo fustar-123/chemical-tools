@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NPSH 计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>NPSH 计算</h1><p>估算泵入口可用汽蚀余量 NPSHa，并与必需汽蚀余量比较。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "pSurface", label: "吸入液面绝压 kPa(a)", value: 101.325, min: 0 },
+        { id: "pVapor", label: "操作温度下饱和蒸汽压 kPa(a)", value: 2.34, min: 0 },
+        { id: "rho", label: "液体密度 kg/m³", value: 1000, min: 1 },
+        { id: "staticHead", label: "液面至泵中心静压头 m", value: 2 },
+        { id: "suctionLoss", label: "吸入管路损失 m", value: 0.8, min: 0 },
+        { id: "npshr", label: "泵必需 NPSHr m", value: 3, min: 0 },
+        { id: "margin", label: "安全余量 m", value: 0.5, min: 0 }
+      ],
+      calculate(v, h) {
+        const g = 9.80665;
+        const pressureHead = (v.pSurface - v.pVapor) * 1000 / (v.rho * g);
+        const npsha = pressureHead + v.staticHead - v.suctionLoss;
+        const required = v.npshr + v.margin;
+        return {
+          results: [
+            { label: "NPSHa", value: npsha, unit: "m" },
+            { label: "校核要求", value: required, unit: "m" },
+            { label: "裕量", value: npsha - required, unit: "m" },
+            { label: "压力项", value: pressureHead, unit: "m" }
+          ],
+          formula: `NPSHa = (P_surface - P_vapor)/(ρg) + H_static - h_loss = ${h.fmt(npsha)} m`,
+          warnings: [npsha < required ? "NPSHa 小于 NPSHr 加安全余量，存在汽蚀风险。" : ""].filter(Boolean),
+          notes: ["静压头液面高于泵中心取正，低于泵中心取负。", "NPSHr 应取泵厂家曲线中对应流量的数据。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

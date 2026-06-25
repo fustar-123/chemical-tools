@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>LMTD 计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>LMTD 计算</h1><p>计算并比较逆流和并流换热的对数平均温差。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "thIn", label: "热流体入口温度 °C", value: 120 },
+        { id: "thOut", label: "热流体出口温度 °C", value: 70 },
+        { id: "tcIn", label: "冷流体入口温度 °C", value: 25 },
+        { id: "tcOut", label: "冷流体出口温度 °C", value: 55 },
+        { id: "factor", label: "温差修正系数 F", value: 1, min: 0.01 }
+      ],
+      calculate(v, h) {
+        const counter1 = v.thIn - v.tcOut;
+        const counter2 = v.thOut - v.tcIn;
+        const parallel1 = v.thIn - v.tcIn;
+        const parallel2 = v.thOut - v.tcOut;
+        const counter = h.lmtd(counter1, counter2);
+        const parallel = h.lmtd(parallel1, parallel2);
+        return {
+          results: [
+            { label: "逆流 LMTD", value: counter, unit: "K" },
+            { label: "逆流修正后", value: counter * v.factor, unit: "K" },
+            { label: "并流 LMTD", value: parallel, unit: "K" },
+            { label: "并流修正后", value: parallel * v.factor, unit: "K" }
+          ],
+          formula: `ΔTlm = (ΔT1 - ΔT2) / ln(ΔT1 / ΔT2)`,
+          warnings: [counter1 <= 0 || counter2 <= 0 || parallel1 <= 0 || parallel2 <= 0 ? "存在温差交叉或端温差不为正，需检查温度输入。" : ""].filter(Boolean),
+          notes: [`逆流端温差：${h.fmt(counter1)} K、${h.fmt(counter2)} K。`, `并流端温差：${h.fmt(parallel1)} K、${h.fmt(parallel2)} K。`]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

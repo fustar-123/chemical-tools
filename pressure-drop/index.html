@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>管道压降计算</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>管道压降计算</h1><p>按 Darcy-Weisbach 公式估算圆管沿程压降和局部阻力压降。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "flow", label: "体积流量", value: 50, step: "0.01" },
+        { id: "flowUnit", label: "流量单位", type: "select", value: "m3h", options: [{ value: "m3h", label: "m³/h" }, { value: "ls", label: "L/s" }, { value: "m3s", label: "m³/s" }] },
+        { id: "diameter", label: "管内径 mm", value: 80, min: 0.1 },
+        { id: "length", label: "管长 m", value: 100, min: 0 },
+        { id: "roughness", label: "绝对粗糙度 mm", value: 0.045, step: "0.001", min: 0 },
+        { id: "k", label: "局部阻力系数 K", value: 8, min: 0 },
+        { id: "rho", label: "密度 kg/m³", value: 1000, min: 1 },
+        { id: "mu", label: "动力黏度 mPa·s", value: 1, min: 0.001 }
+      ],
+      calculate(v, h) {
+        const q = h.flowToM3s(v.flow, v.flowUnit);
+        const area = h.area(v.diameter);
+        const velocity = q / area;
+        const re = v.rho * velocity * (v.diameter / 1000) / (v.mu / 1000);
+        const f = h.frictionFactor(re, v.roughness, v.diameter);
+        const dynamic = v.rho * velocity * velocity / 2;
+        const dpStraight = f * (v.length / (v.diameter / 1000)) * dynamic;
+        const dpLocal = v.k * dynamic;
+        const dp = dpStraight + dpLocal;
+        return {
+          results: [
+            { label: "总压降", value: dp / 1000, unit: "kPa" },
+            { label: "沿程压降", value: dpStraight / 1000, unit: "kPa" },
+            { label: "局部压降", value: dpLocal / 1000, unit: "kPa" },
+            { label: "管内流速", value: velocity, unit: "m/s" },
+            { label: "雷诺数", value: re, unit: "", digits: 0 },
+            { label: "摩阻系数", value: f, unit: "", digits: 4 }
+          ],
+          formula: `ΔP = (f·L/D + K)·ρv²/2 = ${h.fmt(dp / 1000)} kPa`,
+          warnings: [velocity > 3 ? "液体管内流速偏高，建议复核管径和压降。" : ""].filter(Boolean),
+          notes: [`流态判定：${h.classifyRe(re)}。`, "摩阻系数采用层流 64/Re，湍流采用 Swamee-Jain 近似。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

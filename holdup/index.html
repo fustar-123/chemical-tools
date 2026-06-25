@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>持液量计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>持液量计算</h1><p>估算圆筒、管段或设备的液体持有量。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "diameter", label: "内径 mm", value: 1000, min: 0.1 },
+        { id: "length", label: "长度/高度 m", value: 3, min: 0 },
+        { id: "fill", label: "充液率 %", value: 70, min: 0 },
+        { id: "rho", label: "液体密度 kg/m³", value: 1000, min: 1 }
+      ],
+      calculate(v, h) {
+        const volume = h.area(v.diameter) * v.length * v.fill / 100;
+        const mass = volume * v.rho;
+        return {
+          results: [
+            { label: "持液体积", value: volume, unit: "m³" },
+            { label: "持液量", value: volume * 1000, unit: "L" },
+            { label: "液体质量", value: mass, unit: "kg" },
+            { label: "液体质量", value: mass / 1000, unit: "t" }
+          ],
+          formula: `V = πD²/4 · L · fill = ${h.fmt(volume)} m³`,
+          warnings: [v.fill > 100 ? "充液率超过 100%，请检查输入。" : ""].filter(Boolean),
+          notes: ["该工具按全圆截面比例估算，卧式容器部分充液需要更精确的圆缺几何计算。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

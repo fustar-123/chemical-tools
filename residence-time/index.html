@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>停留时间计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>停留时间计算</h1><p>计算容器、反应器或管段内物料的平均停留时间。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "volume", label: "有效容积 m³", value: 10, min: 0 },
+        { id: "flow", label: "体积流量", value: 20, min: 0.0001 },
+        { id: "flowUnit", label: "流量单位", type: "select", value: "m3h", options: [{ value: "m3h", label: "m³/h" }, { value: "ls", label: "L/s" }, { value: "m3s", label: "m³/s" }] },
+        { id: "voidFraction", label: "有效体积分数 %", value: 100, min: 0 }
+      ],
+      calculate(v, h) {
+        const q = h.flowToM3s(v.flow, v.flowUnit) * 3600;
+        const effective = v.volume * v.voidFraction / 100;
+        const tau = effective / q;
+        return {
+          results: [
+            { label: "有效容积", value: effective, unit: "m³" },
+            { label: "停留时间", value: tau, unit: "h" },
+            { label: "停留时间", value: tau * 60, unit: "min" },
+            { label: "体积流量", value: q, unit: "m³/h" }
+          ],
+          formula: `τ = V_effective / Q = ${h.fmt(tau)} h`,
+          warnings: [],
+          notes: ["多相体系、返混或死区明显时，平均停留时间不能替代停留时间分布分析。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>管径计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>管径计算</h1><p>按目标流速反算圆管内径，并给出标准管径取整参考。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "flow", label: "体积流量", value: 50 },
+        { id: "flowUnit", label: "流量单位", type: "select", value: "m3h", options: [{ value: "m3h", label: "m³/h" }, { value: "ls", label: "L/s" }, { value: "m3s", label: "m³/s" }] },
+        { id: "targetVelocity", label: "目标流速 m/s", value: 1.5, min: 0.01 },
+        { id: "rho", label: "密度 kg/m³", value: 1000, min: 1 },
+        { id: "mu", label: "动力黏度 mPa·s", value: 1, min: 0.001 }
+      ],
+      calculate(v, h) {
+        const q = h.flowToM3s(v.flow, v.flowUnit);
+        const d = Math.sqrt(4 * q / (Math.PI * v.targetVelocity)) * 1000;
+        const standards = [15,20,25,32,40,50,65,80,100,125,150,200,250,300,350,400,450,500,600,700,800,900,1000];
+        const next = standards.find((item) => item >= d) || Math.ceil(d / 100) * 100;
+        const realV = q / h.area(next);
+        const re = v.rho * realV * (next / 1000) / (v.mu / 1000);
+        return {
+          results: [
+            { label: "计算内径", value: d, unit: "mm" },
+            { label: "建议取内径", value: next, unit: "mm", digits: 0 },
+            { label: "取整后流速", value: realV, unit: "m/s" },
+            { label: "取整后雷诺数", value: re, unit: "", digits: 0 }
+          ],
+          formula: `D = √(4Q / πv) = ${h.fmt(d)} mm`,
+          warnings: [v.targetVelocity > 3 ? "目标流速偏高，液体输送时可能带来较大压降。" : ""].filter(Boolean),
+          notes: ["建议取内径仅按常用尺寸向上取整，实际应按管材标准和壁厚表复核。", `流态判定：${h.classifyRe(re)}。`]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

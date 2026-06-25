@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>氮封用量计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>氮封用量计算</h1><p>估算储罐出料、降温收缩和换气造成的氮气补充量。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "outflow", label: "最大出料量 m³/h", value: 20, min: 0 },
+        { id: "vaporSpace", label: "气相空间体积 m³", value: 50, min: 0 },
+        { id: "tempDrop", label: "最大降温速率 °C/h", value: 5, min: 0 },
+        { id: "exchange", label: "附加换气量 m³/h", value: 0, min: 0 },
+        { id: "pressure", label: "罐内绝压 kPa(a)", value: 102, min: 0 },
+        { id: "temp", label: "罐内气相温度 °C", value: 25 }
+      ],
+      calculate(v, h) {
+        const thermal = v.vaporSpace * v.tempDrop / (v.temp + 273.15);
+        const actual = v.outflow + thermal + v.exchange;
+        const normal = h.normalGasFlow(actual, v.pressure, v.temp);
+        return {
+          results: [
+            { label: "实际状态补氮量", value: actual, unit: "m³/h" },
+            { label: "标准状态补氮量", value: normal, unit: "Nm³/h" },
+            { label: "出料置换量", value: v.outflow, unit: "m³/h" },
+            { label: "降温收缩量", value: thermal, unit: "m³/h" }
+          ],
+          formula: `Q_N2 = Q_out + V_gas·|dT/dt|/T + Q_extra = ${h.fmt(actual)} m³/h`,
+          warnings: [],
+          notes: ["该工具为简化估算，正式氮封阀选型应结合 API 2000、厂家曲线和压力设定。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

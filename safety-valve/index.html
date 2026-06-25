@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>安全阀计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>安全阀计算</h1><p>按简化气体临界流公式估算安全阀所需有效泄放面积。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "massFlow", label: "泄放质量流量 kg/h", value: 5000, min: 0 },
+        { id: "pressure", label: "泄放入口绝压 MPa(a)", value: 1.1, min: 0.001 },
+        { id: "temp", label: "泄放温度 °C", value: 50 },
+        { id: "mw", label: "分子量 kg/kmol", value: 28, min: 0.001 },
+        { id: "k", label: "绝热指数 k", value: 1.4, min: 1.001 },
+        { id: "z", label: "压缩因子 Z", value: 1, min: 0.01 },
+        { id: "kd", label: "泄放系数 Kd", value: 0.975, min: 0.01 },
+        { id: "margin", label: "面积裕量 %", value: 10, min: 0 }
+      ],
+      calculate(v, h) {
+        const w = v.massFlow / 3600;
+        const p = v.pressure * 1e6;
+        const t = v.temp + 273.15;
+        const r = 8314 / v.mw;
+        const critical = Math.sqrt(v.k / (r * t * v.z)) * Math.pow(2 / (v.k + 1), (v.k + 1) / (2 * (v.k - 1)));
+        const area = w / (v.kd * p * critical);
+        const rec = area * (1 + v.margin / 100);
+        return {
+          results: [
+            { label: "计算有效面积", value: area * 1e6, unit: "mm²" },
+            { label: "建议有效面积", value: rec * 1e6, unit: "mm²" },
+            { label: "建议孔径", value: Math.sqrt(4 * rec / Math.PI) * 1000, unit: "mm" },
+            { label: "质量通量", value: w / area, unit: "kg/(m²·s)" }
+          ],
+          formula: `A = W / [Kd·P·C] = ${h.fmt(area * 1e6)} mm²`,
+          warnings: [v.pressure < 0.2 ? "入口绝压较低，临界流条件可能不成立，需进行背压和临界压比校核。" : ""].filter(Boolean),
+          notes: ["该工具为气体临界流简化估算；正式安全阀定径必须按 API 520、GB/T 12241/12243 或适用规范完成。", "液体、两相流、火灾工况和背压修正不适用本简化页。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

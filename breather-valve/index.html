@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>呼吸阀计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>呼吸阀计算</h1><p>估算储罐进出料和热呼吸引起的呼吸阀通气量。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "inflow", label: "最大进料量 m³/h", value: 50, min: 0 },
+        { id: "outflow", label: "最大出料量 m³/h", value: 50, min: 0 },
+        { id: "tankVolume", label: "储罐总容积 m³", value: 500, min: 0 },
+        { id: "thermalRate", label: "热呼吸系数 1/h", value: 0.02, min: 0 },
+        { id: "pressure", label: "气相绝压 kPa(a)", value: 101.325, min: 0 },
+        { id: "temp", label: "气相温度 °C", value: 25 }
+      ],
+      calculate(v, h) {
+        const thermal = v.tankVolume * v.thermalRate;
+        const outBreathActual = v.inflow + thermal;
+        const inBreathActual = v.outflow + thermal;
+        const outNormal = h.normalGasFlow(outBreathActual, v.pressure, v.temp);
+        const inNormal = h.normalGasFlow(inBreathActual, v.pressure, v.temp);
+        return {
+          results: [
+            { label: "呼出量", value: outNormal, unit: "Nm³/h" },
+            { label: "吸入量", value: inNormal, unit: "Nm³/h" },
+            { label: "热呼吸量", value: thermal, unit: "m³/h" },
+            { label: "建议阀能力", value: Math.max(outNormal, inNormal), unit: "Nm³/h" }
+          ],
+          formula: `Q_out = Q_inflow + Q_thermal；Q_in = Q_outflow + Q_thermal`,
+          warnings: [],
+          notes: ["热呼吸系数为简化参数，正式选型应按 API 2000 或 SH/T 3007 等规范计算。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

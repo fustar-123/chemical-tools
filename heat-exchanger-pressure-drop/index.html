@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>换热器压降计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>换热器压降计算</h1><p>按管程等效流道估算换热器单侧压降。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "flow", label: "单侧体积流量", value: 60 },
+        { id: "flowUnit", label: "流量单位", type: "select", value: "m3h", options: [{ value: "m3h", label: "m³/h" }, { value: "ls", label: "L/s" }, { value: "m3s", label: "m³/s" }] },
+        { id: "channels", label: "并联流道数量", value: 80, min: 1, step: "1" },
+        { id: "diameter", label: "单流道内径 mm", value: 19, min: 0.1 },
+        { id: "length", label: "单程长度 m", value: 6, min: 0 },
+        { id: "passes", label: "程数", value: 2, min: 1, step: "1" },
+        { id: "k", label: "入口/弯头等局部 K", value: 4, min: 0 },
+        { id: "roughness", label: "粗糙度 mm", value: 0.045, min: 0 },
+        { id: "rho", label: "密度 kg/m³", value: 1000, min: 1 },
+        { id: "mu", label: "动力黏度 mPa·s", value: 1, min: 0.001 }
+      ],
+      calculate(v, h) {
+        const qEach = h.flowToM3s(v.flow, v.flowUnit) / v.channels;
+        const vel = qEach / h.area(v.diameter);
+        const re = v.rho * vel * (v.diameter / 1000) / (v.mu / 1000);
+        const f = h.frictionFactor(re, v.roughness, v.diameter);
+        const dp = (f * (v.length * v.passes / (v.diameter / 1000)) + v.k) * v.rho * vel * vel / 2;
+        return {
+          results: [
+            { label: "估算压降", value: dp / 1000, unit: "kPa" },
+            { label: "单流道流速", value: vel, unit: "m/s" },
+            { label: "雷诺数", value: re, unit: "", digits: 0 },
+            { label: "摩阻系数", value: f, unit: "", digits: 4 }
+          ],
+          formula: `ΔP = (f·L_total/D + K)·ρv²/2 = ${h.fmt(dp / 1000)} kPa`,
+          warnings: [vel > 2.5 ? "管程流速较高，需复核允许压降和冲蚀风险。" : ""].filter(Boolean),
+          notes: ["该工具适合初算管程或规则流道压降，壳程压降需按折流板和布管结构进一步计算。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>换热面积计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>换热面积计算</h1><p>由热负荷、总传热系数和对数平均温差估算换热面积。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "duty", label: "热负荷 kW", value: 500, min: 0 },
+        { id: "u", label: "总传热系数 W/(m²·K)", value: 600, min: 0.01 },
+        { id: "lmtd", label: "对数平均温差 K", value: 35, min: 0.01 },
+        { id: "factor", label: "温差修正系数 F", value: 0.9, min: 0.01 },
+        { id: "margin", label: "面积裕量 %", value: 15, min: 0 }
+      ],
+      calculate(v, h) {
+        const area = v.duty * 1000 / (v.u * v.lmtd * v.factor);
+        const rec = area * (1 + v.margin / 100);
+        return {
+          results: [
+            { label: "计算换热面积", value: area, unit: "m²" },
+            { label: "建议换热面积", value: rec, unit: "m²" },
+            { label: "单位面积热负荷", value: v.duty / rec, unit: "kW/m²" }
+          ],
+          formula: `A = Q / (U·ΔTlm·F) = ${h.fmt(area)} m²`,
+          warnings: [v.factor > 1 ? "温差修正系数通常不应大于 1，请检查输入。" : ""].filter(Boolean),
+          notes: ["总传热系数需结合介质、污垢热阻和结构型式确定。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>储罐容积计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>储罐容积计算</h1><p>估算立式圆筒储罐的工作容积、总容积和库存质量。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "diameter", label: "储罐内径 m", value: 4, min: 0.01 },
+        { id: "height", label: "筒体高度 m", value: 8, min: 0 },
+        { id: "bottomHead", label: "底部封头/锥底等效容积 m³", value: 0, min: 0 },
+        { id: "topHead", label: "顶部封头等效容积 m³", value: 0, min: 0 },
+        { id: "workingFill", label: "正常工作液位 %", value: 80, min: 0 },
+        { id: "rho", label: "液体密度 kg/m³", value: 900, min: 1 }
+      ],
+      calculate(v, h) {
+        const cylinder = Math.PI * v.diameter * v.diameter / 4 * v.height;
+        const total = cylinder + v.bottomHead + v.topHead;
+        const working = total * v.workingFill / 100;
+        return {
+          results: [
+            { label: "筒体容积", value: cylinder, unit: "m³" },
+            { label: "总几何容积", value: total, unit: "m³" },
+            { label: "工作容积", value: working, unit: "m³" },
+            { label: "工作库存质量", value: working * v.rho / 1000, unit: "t" }
+          ],
+          formula: `V = πD²H/4 + V_head = ${h.fmt(total)} m³`,
+          warnings: [v.workingFill > 95 ? "工作液位较高，应预留热膨胀和操作波动空间。" : ""].filter(Boolean),
+          notes: ["封头、锥底、浮顶等结构可用等效容积输入。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>

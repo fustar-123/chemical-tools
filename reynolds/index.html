@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>雷诺数计算</title><link rel="stylesheet" href="../css/style.css"></head>
+<body>
+  <header class="site-header"><div class="site-header-inner"><div class="brand"><h1>雷诺数计算</h1><p>根据管径、流量、密度和黏度判断流态。</p></div><div class="header-actions"><a class="btn ghost" href="../">返回首页</a></div></div></header>
+  <main class="page-shell"><div id="toolRoot"></div></main>
+  <script>
+    window.toolConfig = {
+      fields: [
+        { id: "flow", label: "体积流量", value: 20 },
+        { id: "flowUnit", label: "流量单位", type: "select", value: "m3h", options: [{ value: "m3h", label: "m³/h" }, { value: "ls", label: "L/s" }, { value: "m3s", label: "m³/s" }] },
+        { id: "diameter", label: "管内径 mm", value: 50, min: 0.1 },
+        { id: "rho", label: "密度 kg/m³", value: 1000, min: 1 },
+        { id: "mu", label: "动力黏度 mPa·s", value: 1, min: 0.001 }
+      ],
+      calculate(v, h) {
+        const q = h.flowToM3s(v.flow, v.flowUnit);
+        const velocity = q / h.area(v.diameter);
+        const re = v.rho * velocity * (v.diameter / 1000) / (v.mu / 1000);
+        return {
+          results: [
+            { label: "雷诺数", value: re, unit: "", digits: 0 },
+            { label: "流态", value: h.classifyRe(re), unit: "" },
+            { label: "管内流速", value: velocity, unit: "m/s" }
+          ],
+          formula: `Re = ρvD/μ = ${h.fmt(re, 0)}`,
+          warnings: [re >= 2300 && re < 4000 ? "当前处于过渡流区，摩阻和传热关联式选用需谨慎。" : ""].filter(Boolean),
+          notes: ["通常 Re < 2300 为层流，2300-4000 为过渡流，Re > 4000 为湍流。"]
+        };
+      }
+    };
+  </script>
+  <script src="../js/calculator.js"></script>
+</body>
+</html>
